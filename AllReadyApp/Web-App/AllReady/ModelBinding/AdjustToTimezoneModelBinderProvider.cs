@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Linq;
-using System.Reflection;
 
 namespace AllReady.ModelBinding
 {
@@ -9,17 +8,31 @@ namespace AllReady.ModelBinding
     {
         public IModelBinder GetBinder(ModelBinderProviderContext context)
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
-
-            if (!context.Metadata.IsComplexType && !string.IsNullOrEmpty(context.Metadata.PropertyName))
+            if (context == null)
             {
-                // Look for DateTimeOffset attributes
-                var propName = context.Metadata.PropertyName;
-                var propInfo = context.Metadata.ContainerType.GetTypeInfo().GetProperty(propName);
+                throw new ArgumentNullException(nameof(context));
+            }
 
-                // Only one scrubber attribute can be applied to each property
-                var attribute = propInfo.GetCustomAttributes(typeof(AdjustToTimezoneAttribute), false).FirstOrDefault() as AdjustToTimezoneAttribute;
-                if (attribute != null) return new AdjustToTimeZoneModelBinder(context.Metadata.ModelType, attribute.TimeZoneIdPropertyName);
+            if (!context.Metadata.IsComplexType && !string.IsNullOrEmpty(context.Metadata.PropertyName) && context.Metadata.ContainerType != null)
+            {
+                var propName = context.Metadata.PropertyName;
+
+                if (propName == null)
+                {
+                    return null;
+                }
+                
+                var propInfo = context.Metadata.ContainerType.GetProperty(propName);
+
+                if (propInfo == null)
+                {
+                    return null;
+                }
+
+                if (propInfo.GetCustomAttributes(typeof(AdjustToTimezoneAttribute), false).FirstOrDefault() is AdjustToTimezoneAttribute attribute)
+                {
+                    return new AdjustToTimeZoneModelBinder(context.Metadata.ModelType, attribute.TimeZoneIdPropertyName);
+                }
             }
 
             return null;

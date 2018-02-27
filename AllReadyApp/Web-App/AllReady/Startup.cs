@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using AllReady.DataAccess;
 using AllReady.Hangfire;
 using AllReady.Models;
@@ -13,15 +12,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
 using Hangfire;
 using AllReady.ModelBinding;
-using Microsoft.AspNetCore.Localization;
 using AllReady.Configuration;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Twitter;
-using Microsoft.Extensions.PlatformAbstractions;
 using System.Linq;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AllReady
 {
@@ -30,7 +25,7 @@ namespace AllReady
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            Configuration["version"] = new ApplicationEnvironment().ApplicationVersion;
+            Configuration["version"] = Assembly.GetEntryAssembly().GetName().Version.ToString();
         }
 
         public IConfiguration Configuration { get; }
@@ -78,7 +73,8 @@ namespace AllReady
                     config.ModelBinderProviders.Insert(0, new AdjustToTimezoneModelBinderProvider());
                 })
                 .AddJsonOptions(options =>
-                    options.SerializerSettings.ContractResolver = new DefaultContractResolver());
+                    options.SerializerSettings.ContractResolver = new DefaultContractResolver())
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             // Adds a default in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
@@ -127,17 +123,17 @@ namespace AllReady
                 app.UseExceptionHandler("/Error/500");
             }
 
-            app.UseStatusCodePagesWithReExecute("/Error/{0}");
-
             // Add static files to the request pipeline.
             app.UseStaticFiles();
+
+            app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
             app.UseRequestLocalization();
 
             Authentication.ConfigureAuthentication(app, Configuration);
 
             // Check for -PurgeRefreshSampleData command line argument.
-            bool purgeRefreshSampleData = Environment.GetCommandLineArgs().Contains("-PurgeRefreshSampleData", StringComparer.InvariantCultureIgnoreCase);
+            var purgeRefreshSampleData = Environment.GetCommandLineArgs().Contains("-PurgeRefreshSampleData", StringComparer.InvariantCultureIgnoreCase);
 
             if (purgeRefreshSampleData)
             {
