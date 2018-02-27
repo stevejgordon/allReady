@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using System;
 using System.Linq;
 
@@ -13,7 +14,7 @@ namespace AllReady.ModelBinding
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (!context.Metadata.IsComplexType && !string.IsNullOrEmpty(context.Metadata.PropertyName) && context.Metadata.ContainerType != null)
+            if (!context.Metadata.IsComplexType && context.Metadata.MetadataKind == ModelMetadataKind.Property)
             {
                 var propName = context.Metadata.PropertyName;
 
